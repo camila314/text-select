@@ -50,11 +50,11 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 	}
 
 	void copySelection() {
-		clip::set_text(m_node->getString().substr(m_selected.front(), 1 + m_selected.back() - m_selected.front()));
+		clip::set_text(std::string(m_node->getString()).substr(m_selected.front(), 1 + m_selected.back() - m_selected.front()));
 	}
 
 	void deleteSelection() {
-		auto str = m_node->getString();
+		auto str = std::string(m_node->getString());
 		std::sort(m_selected.begin(), m_selected.end());
 
 
