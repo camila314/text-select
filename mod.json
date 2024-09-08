@@ -1,0 +1,22 @@
+{
+	"geode": "3.4.0",
+	"gd": {
+		"win": "2.206",
+		"android": "2.206",
+		"mac": "2.206",
+		"ios": "2.206"
+	},
+	"id": "camila314.text-select",
+	"name": "Text Select",
+	"version": "v1.0.0",
+	"developer": "camila314",
+	"settings": {
+		"color": {
+			"name": "Selection Color",
+			"description": "Sets the color of selected text",
+			"type": "color",
+			"default": "#5078FF"
+		}
+	},
+	"description": "Allows text selection in inputs! Works cross platform and supports Ctrl+C, Ctrl+X, Ctrl+A, and ofc Ctrl+V (for Mac and PC)"
+}
