@@ -4,6 +4,22 @@ using namespace geode::prelude;
 #include <Geode/modify/CCTextInputNode.hpp>
 #include <clip.h>
 
+#ifdef GEODE_IS_WINDOWS
+#include <Geode/modify/CCEGLView.hpp>
+#include <Windows.h>
+class $modify(CCEGLView) {
+	void onGLFWKeyCallback(GLFWwindow* window, int k, int scancode, int action, int mods) {
+		CCEGLView::onGLFWKeyCallback(window, k, scancode, action, mods);
+
+		bool cmd = CCDirector::sharedDirector()->getKeyboardDispatcher()->getControlKeyPressed();
+		char key = (char)k;
+		if (cmd && (key == 'C' || key == 'X' || key == 'A')) {
+			CCIMEDispatcher::sharedDispatcher()->dispatchInsertText(&key, 1, (cocos2d::enumKeyCodes)key);
+		}
+	}
+};
+#endif
+
 class Intercept : public CCLayer, public CCTextFieldDelegate {
 	CCTextInputNode* m_node;
  public:
@@ -32,12 +48,18 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 	}
 
 	void updateSelectVisual() {
+		if (m_node->getString() == "")
+			m_selected.clear();
+
 		int i = 0;
 		for (auto& c : CCArrayExt<CCSprite*>(m_node->m_placeholderLabel->getChildren())) {
 			if (std::find(m_selected.begin(), m_selected.end(), i) != m_selected.end()) {
 				c->setColor(Mod::get()->getSettingValue<ccColor3B>("color"));
 			} else {
-				c->setColor(m_node->m_textColor);
+				if (m_node->getString() == "")
+					c->setColor(m_node->m_placeholderColor);
+				else
+					c->setColor(m_node->m_textColor);
 			}
 
 			++i;
@@ -152,6 +174,7 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 		return m_node->onTextFieldDetachWithIME(sender);
 	}
 	void textChanged() override {
+		updateSelectVisual();
 		m_node->textChanged();
 	}
 };
