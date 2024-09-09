@@ -1,3 +1,4 @@
+#include "ccTypes.h"
 #include <Geode/Geode.hpp>
 using namespace geode::prelude;
 
@@ -22,6 +23,7 @@ class $modify(CCEGLView) {
 
 class Intercept : public CCLayer, public CCTextFieldDelegate {
 	CCTextInputNode* m_node;
+	CCDrawNode* m_drawNode;
  public:
 	bool m_touchBegan;
 	std::vector<int> m_selected;
@@ -44,25 +46,47 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 		m_node = n;
 		m_touchBegan = false;
 
+		m_drawNode = CCDrawNode::create();
+		m_drawNode->setBlendFunc({GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA});
+		addChild(m_drawNode);
+
 		return true;
 	}
 
 	void updateSelectVisual() {
+		m_drawNode->clear();
+
 		if (m_node->getString() == "")
 			m_selected.clear();
 
-		int i = 0;
-		for (auto& c : CCArrayExt<CCSprite*>(m_node->m_placeholderLabel->getChildren())) {
-			if (std::find(m_selected.begin(), m_selected.end(), i) != m_selected.end()) {
-				c->setColor(Mod::get()->getSettingValue<ccColor3B>("color"));
-			} else {
-				if (m_node->getString() == "")
-					c->setColor(m_node->m_placeholderColor);
-				else
-					c->setColor(m_node->m_textColor);
-			}
+		std::sort(m_selected.begin(), m_selected.end());
 
-			++i;
+		float start = 0;
+		float end = 0;
+
+		auto arr = CCArrayExt<CCSprite*>(m_node->m_placeholderLabel->getChildren());
+		for (int i = 0; i < arr.size(); ++i) {
+			if (std::find(m_selected.begin(), m_selected.end(), i) != m_selected.end()) {
+				if (start == 0)
+					start = 1 + arr[i]->getPosition().x - arr[i]->getContentSize().width / 2;
+
+				if (arr.size() > i + 1)
+					end = 1 + arr[i + 1]->getPosition().x - arr[i + 1]->getContentSize().width / 2;
+				else
+					end = 2 + arr[i]->getPosition().x + arr[i]->getContentSize().width / 2;
+			}
+		}
+
+		if (start != 0) {
+			auto world = [=](auto p){return m_node->m_placeholderLabel->convertToWorldSpace(p);};
+
+			auto startPos = m_drawNode->convertToNodeSpace(world(ccp(start, 0)));
+			auto endPos = m_drawNode->convertToNodeSpace(world(ccp(end, m_node->m_placeholderLabel->getContentHeight())));
+
+			auto col = ccc4FFromccc3B(Mod::get()->getSettingValue<ccColor3B>("color"));
+			col.a = 0.5;
+
+			m_drawNode->drawRect(startPos, endPos, col, 0, col);
 		}
 	}
 
@@ -114,7 +138,7 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 		for (auto& c : CCArrayExt<CCSprite*>(m_node->m_placeholderLabel->getChildren())) {
 			auto x = m_node->m_placeholderLabel->convertToWorldSpace(c->getPosition()).x;
 
-			if (x >= start && x <= end) {
+			if (x >= start && x <= end && i < m_node->getString().size()) {
 				m_selected.push_back(i);
 			}
 			++i;
@@ -139,7 +163,7 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 					return true;
 				case 'A':
 					m_selected.clear();
-					for (int i = 0; i < m_node->m_placeholderLabel->getChildrenCount(); ++i) {
+					for (int i = 0; i < m_node->getString().size(); ++i) {
 						m_selected.push_back(i);
 					}
 					updateSelectVisual();
