@@ -113,6 +113,7 @@ class Intercept : public CCLayer, public CCTextFieldDelegate {
 	}
 
 	bool ccTouchBegan(CCTouch* t, CCEvent* e) override {
+		log::info("Incercept Began");
 		if (!m_selected.empty()) {
 			deselect();
 			return true;
@@ -222,10 +223,18 @@ class $modify(CCTextInputNode) {
 			m_fields->m_intercept = nullptr;
 		}
 
+		if (m_fields->m_intercept) {
+			auto* td = CCTouchDispatcher::get();
+			auto handler = td->findHandler(m_fields->m_intercept);
+			if (handler) {
+			    td->setPriority(-505, handler->getDelegate());
+			}
+		}
 		visit();
 	}
 
 	bool ccTouchBegan(CCTouch* t, CCEvent* e) {
+		log::info("Touch Began!");
 		if (!m_fields->m_intercept || m_fields->m_intercept->m_touchBegan)
 			return ccTouchBegan(t, nullptr);
 		else
